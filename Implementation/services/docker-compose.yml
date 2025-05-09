@@ -5,6 +5,18 @@ networks:
     driver: bridge
 
 services:
+
+  mysql-expenses:
+    image: mysql:latest
+    container_name: mysql-expense-1
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: expense_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    networks:
+      - spendsense-net
+
   mysql-keycloak:
     image: mysql:8
     environment:
@@ -38,14 +50,20 @@ services:
     networks:
       - spendsense-net
 
-  whoami:
-    image: traefik/whoami
+
+  expense-service:
+    build: ./expense-service/openjdk
+    container_name: expense-service-1
+
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`local.spendsense.net`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.expense-service.rule=Host(`local.spendsense.net`)"
+      - "traefik.http.routers.expense-service.entrypoints=web"
+      - "traefik.http.services.expense-service.loadbalancer.server.port=8080"
+
     networks:
       - spendsense-net
+
 
 volumes:
   mysql_data:

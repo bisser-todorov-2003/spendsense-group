@@ -20,10 +20,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/api/**").authenticated()  // Protect the /api/** endpoints
                                 .anyRequest().permitAll()  // Allow all other requests
-                )
-                .addFilterBefore(authHeaderFilter, UsernamePasswordAuthenticationFilter.class);  // Add the custom filter
+                );
+//                .addFilterBefore(authHeaderFilter, UsernamePasswordAuthenticationFilter.class);  // Add the custom filter
 
         return http.build();
     }

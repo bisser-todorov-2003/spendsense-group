@@ -19,11 +19,13 @@ public class AuthHeaderFilter extends OncePerRequestFilter {
 
         String userHeader = request.getHeader("X-Auth-Request-User");
 
+/*
         if (userHeader == null || userHeader.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized - Missing X-Auth-Request-User");
             return;
         }
+*/
 
         // Optionally, log or store user info somewhere here
 
