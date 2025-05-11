@@ -52,7 +52,7 @@ services:
 
   keycloak:
     image: keycloak/keycloak:latest
-    command: start-dev
+    command: start-dev --log=console,file
     container_name: keycloak
     environment:
       KC_DB: mysql
@@ -65,7 +65,13 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
       KC_HTTP_PORT: 8888
+
+      OAUTH2_PROXY_COOKIE_SECURE: "false"
+      OAUTH2_PROXY_COOKIE_SAMESITE: "Lax"  # Или "None" ако е нужно
+      OAUTH2_PROXY_COOKIE_DOMAINS: ".local.spendsense.net"
 
 
     ports:
@@ -86,7 +92,7 @@ services:
 
     environment:
       OAUTH2_PROXY_PROVIDER: keycloak-oidc
-      OAUTH2_PROXY_OIDC_ISSUER_URL: "http://keycloak:8888/realms/master"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: "http://auth.local.spendsense.net:8888/realms/master"
       OAUTH2_PROXY_COOKIE_SECRET: "i6OQu7IbTqFNdNdqQQivBLJO74a5GEXM"
       OAUTH2_PROXY_CLIENT_ID: "spendsense-client"
       OAUTH2_PROXY_CLIENT_SECRET: "iYxxZf6HN4BOuYOwUWmvAUiNOdQe9wc8"
@@ -96,6 +102,9 @@ services:
       OAUTH2_PROXY_REDIRECT_URL: "http://local.spendsense.net:4180/oauth2/callback"
       OAUTH2_PROXY_UPSTREAMS: "http://expense-service:8080"
       OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+
+    extra_hosts:
+      "auth.local.spendsense.net": host-gateway
 
     labels:
       - "traefik.enable=true"
@@ -122,3 +131,4 @@ services:
 
 volumes:
   mysql_data:
+
