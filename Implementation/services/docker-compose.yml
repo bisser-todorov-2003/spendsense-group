@@ -41,12 +41,20 @@ services:
       - "--entryPoints.web.address=:80"
       - "--entryPoints.websecure.address=:443"
       - "--log.level=DEBUG"
+      - "--entryPoints.websecure.http.tls=true"
+      - "--configFile=/etc/traefik/traefik.yml"
+
     ports:
       - "80:80"
       - "8080:8080"  # Traefik Dashboard
       - "443:443"    # HTTPS (optional)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./certs/traefik.crt:/etc/traefik/traefik.crt:ro"
+      - "./certs/traefik.key:/etc/traefik/traefik.key:ro"
+      - "./dynamic_conf.yml:/etc/traefik/dynamic_conf.yml:ro"
+
     networks:
       - spendsense-net
 
@@ -76,7 +84,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=Host(`auth.local.spendsense.net`)"
-      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8888"
 
     ports:
@@ -97,16 +105,18 @@ services:
 
     environment:
       OAUTH2_PROXY_PROVIDER: keycloak-oidc
-      OAUTH2_PROXY_OIDC_ISSUER_URL: "http://auth.local.spendsense.net/realms/master"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: "https://auth.local.spendsense.net/realms/master"
       OAUTH2_PROXY_COOKIE_SECRET: "i6OQu7IbTqFNdNdqQQivBLJO74a5GEXM"
       OAUTH2_PROXY_CLIENT_ID: "spendsense-client"
       OAUTH2_PROXY_CLIENT_SECRET: "vbm8bGCQ3lNAp7esnzu3zJR0O1U0FuaT"
       OAUTH2_PROXY_EMAIL_DOMAINS: "*"
       OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
       OAUTH2_PROXY_COOKIE_SECURE: "false"
-      OAUTH2_PROXY_REDIRECT_URL: "http://local.spendsense.net/oauth2/callback"
+      OAUTH2_PROXY_REDIRECT_URL: "https://local.spendsense.net/oauth2/callback"
       OAUTH2_PROXY_UPSTREAMS: "http://expense-service:8080"
       OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      SSL_CERT_FILE: "/etc/ssl/certs/traefik.crt"
+
 
     extra_hosts:
       "auth.local.spendsense.net": host-gateway
@@ -114,7 +124,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oauth2-proxy.rule=Host(`local.spendsense.net`) && (PathPrefix(`/api/expenses`) || PathPrefix(`/oauth2`))"
-      - "traefik.http.routers.oauth2-proxy.entrypoints=web"
+      - "traefik.http.routers.oauth2-proxy.entrypoints=websecure"
       - "traefik.http.routers.oauth2-proxy.service=oauth2-proxy-service"
       - "traefik.http.services.oauth2-proxy-service.loadbalancer.server.port=4180"
 
@@ -123,6 +133,9 @@ services:
     restart:
       on-failure
 
+    volumes:
+      - ./certs/traefik.crt:/etc/ssl/certs/traefik.crt:ro
+
   expense-service:
     build: ./expense-service/openjdk
     container_name: expense-service
@@ -130,7 +143,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.expense-service.rule=Host(`local.spendsense.net`)"
-      - "traefik.http.routers.expense-service.entrypoints=web"
+      - "traefik.http.routers.expense-service.entrypoints=websecure"
       - "traefik.http.services.expense-service.loadbalancer.server.port=8080"
 
     networks:

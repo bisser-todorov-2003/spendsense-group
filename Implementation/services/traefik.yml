@@ -1,0 +1,22 @@
+entryPoints:
+  web:
+    address: ":80"
+
+  websecure:
+    address: ":443"
+    http:
+      tls: {}  # Активира TLS за този entrypoint
+
+providers:
+  docker:
+    exposedByDefault: false  # За по-голяма сигурност
+
+  file:
+    filename: "/etc/traefik/dynamic_conf.yml"
+    watch: true
+
+api:
+  insecure: true
+
+log:
+  level: DEBUG
